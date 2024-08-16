@@ -24,6 +24,21 @@ def find_text_by_label(soup, label):
         return label_element.find_next('span').text.strip()
     return "N/A"
 
+# Function to count items in sections
+def count_section_items(soup, section_label):
+    section = soup.find('small', string=section_label)
+    if section:
+        table = section.find_next('table')
+        if table:
+            rows = table.find_all('tr')
+            # If there's only one row and it contains "No" (e.g., "No Accreditations"), return the corresponding text
+            if len(rows) == 1 and "No" in rows[0].text:
+                return rows[0].text.strip()
+            # Otherwise, return the count of rows (excluding the header if present)
+            else:
+                return len(rows)- 1
+    return "NA"
+
 # Extract data from HTML
 def extract_data(soup):
     data = {}
@@ -50,6 +65,11 @@ def extract_data(soup):
     map_link_element = soup.find('a', string="Click for Interactive Map")
     data['map_link'] = map_link_element['href'] if map_link_element else "N/A"
 
+    data['accreditations'] = count_section_items(soup, "List of Accreditations")
+    data['adverse_actions'] = count_section_items(soup, "List of Adverse Actions")
+    data['complaints'] = count_section_items(soup, "List of Substantiated Complaints")
+    data['evaluation_reports'] = count_section_items(soup, "List of Evaluation/Deficiency Reports")
+
     return data
 
 def extract_address(soup, label):
@@ -66,7 +86,8 @@ def extract_address(soup, label):
 # Prepare CSV file
 csv_header = ['URL', 'Licensee', 'Facility', 'Status', 'Director', 'Phone', 'Daytime Hours', 'Nighttime Hours',
               'Daytime Ages', 'Nighttime Ages', 'Mailing Address', 'Street Address', 
-              'Click for Interactive Map', 'Alabama Quality Star Rating', 'Rating Expiration Date']
+              'Click for Interactive Map', 'Alabama Quality Star Rating', 'Rating Expiration Date',
+              'Accreditations', 'Adverse Actions', 'Substantiated Complaints', 'Evaluation/Deficiency Reports']
 
 # Open CSV file in write mode
 with open('daycare_info.csv', 'w', newline='') as file:
@@ -81,7 +102,9 @@ with open('daycare_info.csv', 'w', newline='') as file:
         data_row = [f"https://apps.dhr.alabama.gov/daycare/daycare_results?ID={id_value}"] + [data[field] for field in ['licensee', 'facility', 'status', 'director', 'phone', 
                                                            'daytime_hours', 'nighttime_hours', 'daytime_ages', 
                                                            'nighttime_ages', 'mailing_address', 'street_address', 
-                                                           'map_link', 'star_rating', 'rating_expiry']]
+                                                           'map_link', 'star_rating', 'rating_expiry',
+                                                           'accreditations', 'adverse_actions', 
+                                                           'complaints', 'evaluation_reports']]
         writer.writerow(data_row)
 
 print("Data saved to daycare_info.csv")
