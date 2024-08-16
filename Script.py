@@ -36,7 +36,7 @@ def count_section_items(soup, section_label):
                 return rows[0].text.strip()
             # Otherwise, return the count of rows (excluding the header if present)
             else:
-                return len(rows)- 1
+                return len(rows) - 1
     return "NA"
 
 # Extract data from HTML
@@ -59,7 +59,6 @@ def extract_data(soup):
     data['daytime_ages'] = soup.find(string="Daytime Ages:").find_next(string=True).strip() if soup.find(string="Daytime Ages:") else "N/A"
     data['nighttime_ages'] = soup.find(string="Nighttime Ages:").find_next(string=True).strip() if soup.find(string="Nighttime Ages:") else "N/A"
 
-    data['mailing_address'] = extract_address(soup, "Mailing Address:")
     data['street_address'] = extract_address(soup, "Street Address:")
 
     map_link_element = soup.find('a', string="Click for Interactive Map")
@@ -85,7 +84,7 @@ def extract_address(soup, label):
 
 # Prepare CSV file
 csv_header = ['URL', 'Licensee', 'Facility', 'Status', 'Director', 'Phone', 'Daytime Hours', 'Nighttime Hours',
-              'Daytime Ages', 'Nighttime Ages', 'Mailing Address', 'Street Address', 
+              'Daytime Ages', 'Nighttime Ages', 'Street Address', 
               'Click for Interactive Map', 'Alabama Quality Star Rating', 'Rating Expiration Date',
               'Accreditations', 'Adverse Actions', 'Substantiated Complaints', 'Evaluation/Deficiency Reports']
 
@@ -94,14 +93,21 @@ with open('daycare_info.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(csv_header)
 
-    # Loop through IDs from 850 to 880
-    for id_value in range(850,870):
+    # Loop through IDs starting from 1
+    for id_value in range(1, 5000):  # Set a high range to ensure processing continues until conditions met
         print(f"Processing ID: {id_value}")
         soup = fetch_and_parse_html(id_value)
         data = extract_data(soup)
+        
+        # Check if all critical fields are "N/A"
+        if all(data[field] == "N/A" for field in ['licensee', 'facility', 'status','phone', 
+                                                  'daytime_hours', 'nighttime_hours', 'daytime_ages', 'nighttime_ages']):
+            print(f"Stopping as all critical fields are N/A for ID: {id_value}")
+            break
+        
         data_row = [f"https://apps.dhr.alabama.gov/daycare/daycare_results?ID={id_value}"] + [data[field] for field in ['licensee', 'facility', 'status', 'director', 'phone', 
                                                            'daytime_hours', 'nighttime_hours', 'daytime_ages', 
-                                                           'nighttime_ages', 'mailing_address', 'street_address', 
+                                                           'nighttime_ages','street_address', 
                                                            'map_link', 'star_rating', 'rating_expiry',
                                                            'accreditations', 'adverse_actions', 
                                                            'complaints', 'evaluation_reports']]
