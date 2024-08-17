@@ -8,7 +8,8 @@ def fetch_and_parse_html(id_value):
     response = requests.get(url)
     return BeautifulSoup(response.text, 'html.parser'), url
 
-# Function to extract data from the parsed HTML
+
+
 def extract_data(soup, url):
     data = {}
 
@@ -238,9 +239,29 @@ with open('daycare_info.csv', 'w', newline='') as file:
     writer.writerow(csv_header)
 
     # Loop through IDs from 850 to 870
-    for id_value in range(850, 870):
+    for id_value in range(1, 5000):
         print(f"Processing ID: {id_value}")
         soup, url = fetch_and_parse_html(id_value)
         data = extract_data(soup, url)
         data_row = [data.get(field, '-') for field in csv_header]
         writer.writerow(data_row)
+def clean_csv(file_path):
+    with open(file_path, 'r') as infile, open('cleaned_daycare_info.csv', 'w', newline='') as outfile:
+        reader = csv.DictReader(infile)
+        fieldnames = reader.fieldnames  # Explicitly set the fieldnames from the reader
+
+        if fieldnames is None:
+            raise ValueError("No header row found in the input CSV file")
+
+        writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for row in reader:
+            if not (row['ProviderName'] == '-' and row['ProviderFullAddress'] == '-' and
+                    row['ProviderTelephone'] == '-' and row['ProviderEmail'] == '-'):
+                writer.writerow(row)
+
+# Clean the CSV by removing rows with all specified columns as '-'
+clean_csv('daycare_info.csv')
+
+
