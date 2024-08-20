@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+import re
 
 # Function to fetch and parse HTML
 def fetch_and_parse_html(id_value):
@@ -19,7 +20,8 @@ def extract_data(soup, url):
     # Extract basic details with fallback to '-'
     data['ProviderName'] = soup.find('label', {'for': 'ProviderName'}).text.strip() if soup.find('label', {'for': 'ProviderName'}) and soup.find('label', {'for': 'ProviderName'}).text.strip() else '-'
     data['ProviderFullAddress'] = soup.find('label', {'for': 'ProviderFullAddress'}).text.strip() if soup.find('label', {'for': 'ProviderFullAddress'}) and soup.find('label', {'for': 'ProviderFullAddress'}).text.strip() else '-'
-
+    zipcode_match = re.search(r'\b\d{5}\b', data['ProviderFullAddress'])
+    data['Zipcode'] = zipcode_match.group(0) if zipcode_match else '-'
     label = soup.find('label', {'for': 'ProviderTelephone'})
     if label:
       phone_text = label.text.replace('Telephone:', '').strip()
@@ -229,7 +231,7 @@ def extract_data(soup, url):
     return data
 
 # CSV Headers
-csv_header = ['URL', 'ProviderName', 'ProviderFullAddress', 'ProviderTelephone', 'ProviderEmail', 'ProviderWebsite',
+csv_header = ['URL', 'ProviderName', 'ProviderFullAddress','Zipcode', 'ProviderTelephone', 'ProviderEmail', 'ProviderWebsite',
               'About Us', 'Setting','Accepts CCAP','License Expires','License Capacity','COVID Capacity','Availability','Languages Spoken','RIDE CECE Approval','Contact Person','Program Status','Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
               'Accreditations', 'Report Count', 'Availability : Infant', 'Availability : Preschool', 
               'Availability : School Age', 'Availability : Toddler']
@@ -239,7 +241,7 @@ with open('daycare_info.csv', 'w', newline='') as file:
     writer.writerow(csv_header)
 
     # Loop through IDs from 850 to 870
-    for id_value in range(1, 5000):
+    for id_value in range(1, 50):
         print(f"Processing ID: {id_value}")
         soup, url = fetch_and_parse_html(id_value)
         data = extract_data(soup, url)
@@ -263,5 +265,3 @@ def clean_csv(file_path):
 
 # Clean the CSV by removing rows with all specified columns as '-'
 clean_csv('daycare_info.csv')
-
-
