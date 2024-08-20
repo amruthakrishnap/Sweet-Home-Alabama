@@ -240,8 +240,8 @@ with open('daycare_info.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(csv_header)
 
-    # Loop through IDs from 850 to 870
-    for id_value in range(1, 50):
+    # Loop through IDs from 1 to 5000
+    for id_value in range(1, 5000):
         print(f"Processing ID: {id_value}")
         soup, url = fetch_and_parse_html(id_value)
         data = extract_data(soup, url)
